@@ -1041,6 +1041,7 @@ dependencies = [
  "flate2",
  "html5ever 0.40.1",
  "image",
+ "libc",
  "lopdf",
  "markup5ever_rcdom",
  "regex",
@@ -1051,6 +1052,7 @@ dependencies = [
  "tempfile",
  "trash",
  "unicode-normalization",
+ "windows",
  "zip",
 ]
 
