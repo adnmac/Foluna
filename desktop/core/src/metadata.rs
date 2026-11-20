@@ -125,6 +125,28 @@ pub struct MetadataEdits {
     pub genre: Option<String>,
 }
 
+impl MetadataEdits {
+    /// Valeurs vides → None, espaces superflus retirés, ISBN normalisé, numéro de série sans série retiré.
+    pub fn normalized(&self) -> MetadataEdits {
+        fn clean(s: &Option<String>) -> Option<String> {
+            s.as_deref().map(str::trim).filter(|t| !t.is_empty()).map(String::from)
+        }
+        let series = clean(&self.series);
+        MetadataEdits {
+            title: self.title.trim().to_string(),
+            authors: self.authors.iter().map(|a| a.trim()).filter(|a| !a.is_empty()).map(String::from).collect(),
+            publisher: clean(&self.publisher),
+            language: clean(&self.language),
+            summary: clean(&self.summary),
+            published_date: clean(&self.published_date),
+            isbn: clean(&self.isbn).map(|i| crate::util::isbn::normalized(&i).unwrap_or(i)),
+            series_index: if series.is_some() { self.series_index } else { None },
+            series,
+            genre: clean(&self.genre),
+        }
+    }
+}
+
 /// Entrée de table des matières, indépendante du format.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct TocNode {

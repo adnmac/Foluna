@@ -3,3 +3,4 @@ pub mod bytes;
 pub mod html;
 pub mod image;
 pub mod isbn;
+pub mod random;
