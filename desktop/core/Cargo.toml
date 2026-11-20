@@ -7,6 +7,10 @@ license.workspace = true
 
 [dependencies]
 encoding_rs = "0.8.44"
+flate2 = "1.1"
+html5ever = "0.40"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "bmp", "webp", "tiff"] }
+markup5ever_rcdom = "0.40.1"
 lopdf = "0.47"
 regex = "1.13"
 roxmltree = "0.21"

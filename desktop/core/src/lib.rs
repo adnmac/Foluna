@@ -4,6 +4,7 @@
 
 pub mod epub;
 pub mod error;
+pub mod convert;
 pub mod extract;
 pub mod metadata;
 pub mod mobi;
