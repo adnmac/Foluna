@@ -1,0 +1,6 @@
+# Même version de Rust partout (développement et CI) : une version plus récente de clippy n'arrête pas la CI
+# par surprise. À monter volontairement.
+[toolchain]
+channel = "1.97.0"
+components = ["clippy", "rustfmt"]
+profile = "minimal"
