@@ -10,7 +10,7 @@ use foluna_core::library::{AppDirectories, Library};
 use serde::{Deserialize, Serialize};
 
 /// Réglages de l'app (`settings.json`).
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     /// Langue de l'interface (« fr », « en »…) ; None : celle de Windows.
@@ -19,6 +19,19 @@ pub struct Settings {
     /// Montrer les copies en double d'un même livre.
     #[serde(default)]
     pub show_duplicates: bool,
+    /// Chercher une nouvelle version sur GitHub au lancement.
+    #[serde(default = "yes")]
+    pub check_updates: bool,
+}
+
+fn yes() -> bool {
+    true
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Settings { language: None, show_duplicates: false, check_updates: true }
+    }
 }
 
 pub struct AppState {

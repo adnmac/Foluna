@@ -545,6 +545,7 @@ pub fn forget_reader(app: AppHandle, state: State<'_, Shared>, id: String) -> Re
 pub struct SettingsInfo {
     pub language: Option<String>,
     pub show_duplicates: bool,
+    pub check_updates: bool,
     pub hidden_duplicates: usize,
     pub covers_bytes: u64,
     pub conversions_bytes: u64,
@@ -563,6 +564,7 @@ pub fn settings(state: State<'_, Shared>) -> SettingsInfo {
     SettingsInfo {
         language: state.settings.language.clone(),
         show_duplicates: state.settings.show_duplicates,
+        check_updates: state.settings.check_updates,
         hidden_duplicates: state.library.hidden_duplicates().len(),
         covers_bytes: covers,
         conversions_bytes: conversions,
@@ -593,6 +595,32 @@ pub fn set_show_duplicates(app: AppHandle, state: State<'_, Shared>, show: bool)
     state.save_settings()?;
     let _ = app.emit("library-changed", ());
     Ok(())
+}
+
+#[tauri::command]
+pub fn set_check_updates(state: State<'_, Shared>, check: bool) -> Res<()> {
+    let mut state = state.lock();
+    state.settings.check_updates = check;
+    state.save_settings()
+}
+
+/// Nouvelle version publiée sur GitHub.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateInfo {
+    pub version: String,
+    /// Installeur, sinon page de la release.
+    pub url: String,
+}
+
+/// Version plus récente disponible ; None si à jour, hors ligne ou réglage désactivé (`force` : demande explicite).
+#[tauri::command]
+pub async fn check_update(state: State<'_, Shared>, force: bool) -> Res<Option<UpdateInfo>> {
+    if !force && !state.lock().settings.check_updates {
+        return Ok(None);
+    }
+    let release = tauri::async_runtime::spawn_blocking(|| foluna_core::update::check(foluna_core::VERSION)).await.map_err(|e| e.to_string())?;
+    Ok(release.map(|r| UpdateInfo { version: r.version, url: r.installer.unwrap_or(r.page) }))
 }
 
 #[tauri::command]

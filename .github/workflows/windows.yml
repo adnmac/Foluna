@@ -38,17 +38,24 @@ jobs:
           npm ci
           npm run check
           npm run build
+      - name: pdfium (couvertures des PDF, livrée avec l'app)
+        working-directory: .
+        shell: bash
+        run: echo "FOLUNA_PDFIUM=$(python desktop/scripts/fetch-pdfium.py windows)" >> "$GITHUB_ENV"
       - name: Tests
         run: cargo test --workspace
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
+      # Build de release dans un dossier à part, hors du cache (qui ne garde que les builds de test).
       - name: Installeurs
         working-directory: desktop/app
+        env:
+          CARGO_TARGET_DIR: ${{ github.workspace }}/desktop/target-bundle
         run: npm run tauri build
       - uses: actions/upload-artifact@v7
         with:
           name: foluna-windows
           path: |
-            desktop/target/release/bundle/nsis/*.exe
-            desktop/target/release/bundle/msi/*.msi
+            desktop/target-bundle/release/bundle/nsis/*.exe
+            desktop/target-bundle/release/bundle/msi/*.msi
           if-no-files-found: error

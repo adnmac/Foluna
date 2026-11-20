@@ -6,6 +6,8 @@ Website: [foluna.app](https://foluna.app) · Download: [latest release](https://
 
 Requires macOS 14 Sonoma or later on a Mac with Apple silicon. Free and open source under the MIT licence.
 
+A Windows version (library and USB sending to Kindle and Kobo) is in progress in [`desktop/`](desktop/README.md).
+
 ## Features
 
 - Indexes one or more existing book folders (EPUB, MOBI, AZW3, AZW, PDF) **without ever modifying them**; a folder on an unplugged disk keeps its books, shown as unavailable until the disk is back.

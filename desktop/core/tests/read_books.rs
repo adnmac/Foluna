@@ -238,6 +238,32 @@ fn pdf_metadata() {
     assert!(!meta.is_drm_protected);
 }
 
+/// Couverture d'un PDF rendue par pdfium : seulement si la bibliothèque est fournie (`FOLUNA_PDFIUM`, défini en CI).
+#[test]
+fn pdf_cover_with_pdfium() {
+    if std::env::var_os("FOLUNA_PDFIUM").is_none() {
+        eprintln!("FOLUNA_PDFIUM absent : couverture des PDF non vérifiée");
+        return;
+    }
+    use lopdf::{dictionary, Document, Object, Stream};
+    let dir = temp_dir();
+    let mut doc = Document::with_version("1.5");
+    let pages_id = doc.new_object_id();
+    let content = doc.add_object(Stream::new(dictionary! {}, b"0 0 1 rg 0 0 595 842 re f".to_vec()));
+    let page_id = doc.add_object(dictionary! { "Type" => "Page", "Parent" => pages_id, "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()], "Contents" => content });
+    doc.objects.insert(pages_id, Object::Dictionary(dictionary! { "Type" => "Pages", "Kids" => vec![page_id.into()], "Count" => 1 }));
+    let catalog_id = doc.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+    doc.trailer.set("Root", catalog_id);
+    let path = dir.path().join("L'invisible madame Orwell - Anna Funder.pdf");
+    doc.save(&path).unwrap();
+    assert!(foluna_core::pdf::has_renderer(), "pdfium introuvable");
+    let meta = extract(&path).unwrap();
+    let cover = meta.cover_data.expect("couverture rendue");
+    assert!(cover.starts_with(&[0xFF, 0xD8]), "JPEG");
+    assert_eq!(meta.title, "L'invisible madame Orwell");
+    assert_eq!(meta.authors, ["Anna Funder"]);
+}
+
 #[test]
 fn format_from_extension() {
     assert_eq!(BookFormat::from_path(Path::new("a.AZW3")), Some(BookFormat::Azw3));

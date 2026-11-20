@@ -1,0 +1,85 @@
+name: Windows (publication)
+
+# Joint les installeurs Windows à une release GitHub : quand scripts/release.sh (Mac) publie une version, ou à la
+# main (onglet Actions, avec l'étiquette vX.Y.Z d'une release existante). L'app Windows n'est pas signée : la
+# notice d'installation est ajoutée aux notes de la release.
+# Jamais de .zip : l'app Mac prend le .zip d'une release quand elle n'a pas de .dmg.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Étiquette de la release (vX.Y.Z)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+      - name: Version
+        run: |
+          VERSION="${TAG#v}"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Étiquette attendue : vX.Y.Z (reçu « $TAG »)"; exit 1; }
+          [[ -d desktop ]] || { echo "Cette version ne contient pas l'app Windows (dossier desktop/)."; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          # Version de la release écrite le temps du build (installeur, « À propos », vérification des mises à jour).
+          python - "$VERSION" <<'PY'
+          import json, re, sys
+          v = sys.argv[1]
+          conf = "desktop/app/src-tauri/tauri.conf.json"
+          data = json.load(open(conf, encoding="utf-8"))
+          data["version"] = v
+          json.dump(data, open(conf, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+          cargo = "desktop/Cargo.toml"
+          text = open(cargo, encoding="utf-8").read()
+          text = re.sub(r'(\[workspace\.package\]\nversion = )"[^"]*"', rf'\1"{v}"', text, count=1)
+          open(cargo, "w", encoding="utf-8").write(text)
+          PY
+          grep -A1 'workspace.package' desktop/Cargo.toml
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/app/package-lock.json
+      - name: Rust (version fixée par desktop/rust-toolchain.toml)
+        working-directory: desktop
+        run: rustup toolchain install
+      - name: pdfium
+        run: python desktop/scripts/fetch-pdfium.py windows
+      - name: Installeurs
+        working-directory: desktop/app
+        run: |
+          npm ci
+          npm run tauri build
+      - name: Joindre à la release
+        run: |
+          BUNDLE=desktop/target/release/bundle
+          mkdir -p out
+          cp "$(ls $BUNDLE/nsis/*-setup.exe | head -1)" "out/Foluna-$VERSION-windows-setup.exe"
+          cp "$(ls $BUNDLE/msi/*fr-FR*.msi $BUNDLE/msi/*.msi 2>/dev/null | head -1)" "out/Foluna-$VERSION-windows.msi"
+          gh release upload "$TAG" out/* --clobber --repo "$GITHUB_REPOSITORY"
+      - name: Notice d'installation dans les notes
+        run: |
+          NOTES="$(gh release view "$TAG" --json body --jq .body --repo "$GITHUB_REPOSITORY")"
+          if ! grep -q "Installer sur Windows" <<<"$NOTES"; then
+            cat > notice.md <<MD
+          $NOTES
+
+          ### Installer sur Windows
+          Télécharger \`Foluna-$VERSION-windows-setup.exe\`. L'app n'est pas signée : Windows peut afficher « Windows a protégé votre ordinateur ». Cliquer sur **Informations complémentaires**, puis **Exécuter quand même**. Si le fichier ne s'ouvre pas : clic droit › **Propriétés**, cocher **Débloquer**, puis **OK**.
+          MD
+            gh release edit "$TAG" --notes-file notice.md --repo "$GITHUB_REPOSITORY"
+          fi

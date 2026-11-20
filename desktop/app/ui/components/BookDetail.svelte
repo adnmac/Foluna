@@ -2,7 +2,7 @@
   import { convertFileSrc } from "@tauri-apps/api/core";
   import { revealItemInDir } from "@tauri-apps/plugin-opener";
   import type { Detail, Edits } from "../api";
-  import { bytes, date, t } from "../i18n.svelte";
+  import { bytes, date, languageName, t } from "../i18n.svelte";
 
   let {
     detail,
@@ -107,7 +107,7 @@
     </div>
     <div class="pair">
       <label>{t("ISBN")}<input bind:value={draft.isbn} /></label>
-      <label class="narrow">{t("Langue")}<input bind:value={draft.language} /></label>
+      <label class="narrow" title={languageName(draft.language)}>{t("Langue")}<input bind:value={draft.language} />{#if languageName(draft.language)}<span class="hint">{languageName(draft.language)}</span>{/if}</label>
     </div>
     <label>{t("Genre")}<input bind:value={draft.genre} /></label>
     <label>{t("Étiquettes")}<input bind:value={tags} placeholder={t("Séparées par des virgules")} /></label>
@@ -183,6 +183,13 @@
   }
   .narrow {
     flex: 0 0 var(--size-narrow-field);
+  }
+  .hint {
+    font-size: var(--font-caption);
+    color: var(--color-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .save {
     display: flex;

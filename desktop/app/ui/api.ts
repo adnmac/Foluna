@@ -104,6 +104,7 @@ export interface SendResult {
 export interface SettingsInfo {
   language: string | null;
   showDuplicates: boolean;
+  checkUpdates: boolean;
   hiddenDuplicates: number;
   coversBytes: number;
   conversionsBytes: number;
@@ -112,6 +113,12 @@ export interface SettingsInfo {
   folders: Entry[];
   readers: Entry[];
   startupError: string | null;
+}
+
+export interface UpdateInfo {
+  version: string;
+  /** Installeur Windows, sinon page de la version sur GitHub. */
+  url: string;
 }
 
 export const api = {
@@ -139,6 +146,8 @@ export const api = {
   settings: () => invoke<SettingsInfo>("settings"),
   setLanguage: (language: string | null) => invoke<void>("set_language", { language }),
   setShowDuplicates: (show: boolean) => invoke<void>("set_show_duplicates", { show }),
+  setCheckUpdates: (check: boolean) => invoke<void>("set_check_updates", { check }),
+  checkUpdate: (force: boolean) => invoke<UpdateInfo | null>("check_update", { force }),
   clearConversions: () => invoke<void>("clear_conversions"),
   exportEpub: (id: string, target: string) => invoke<void>("export_epub", { id, target }),
 };
