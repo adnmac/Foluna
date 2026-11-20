@@ -1,0 +1,212 @@
+{
+  "%@ libres": {
+    "de": "%@ frei",
+    "en": "%@ free",
+    "es": "%@ libres",
+    "nl": "%@ vrij"
+  },
+  "%lld livres": {
+    "de": "%lld Bücher",
+    "en": "%lld books",
+    "es": "%lld libros",
+    "nl": "%lld boeken"
+  },
+  "%lld livres de l'étagère ne sont pas sur la liseuse.": {
+    "de": "%lld Bücher aus dem Regal sind nicht auf dem E-Reader.",
+    "en": "%lld books from the shelf are not on the e-reader.",
+    "es": "%lld libros de la estantería no están en el lector.",
+    "nl": "%lld boeken van de boekenplank staan niet op de e-reader."
+  },
+  "%lld livres importés": {
+    "de": "%lld Bücher importiert",
+    "en": "%lld books imported",
+    "es": "%lld libros importados",
+    "nl": "%lld boeken geïmporteerd"
+  },
+  "1 livre de l'étagère n'est pas sur la liseuse.": {
+    "de": "1 Buch aus dem Regal ist nicht auf dem E-Reader.",
+    "en": "1 book from the shelf is not on the e-reader.",
+    "es": "1 libro de la estantería no está en el lector.",
+    "nl": "1 boek van de boekenplank staat niet op de e-reader."
+  },
+  "1 livre importé": {
+    "de": "1 Buch importiert",
+    "en": "1 book imported",
+    "es": "1 libro importado",
+    "nl": "1 boek geïmporteerd"
+  },
+  "Afficher dans l'Explorateur": {
+    "de": "Im Explorer anzeigen",
+    "en": "Show in File Explorer",
+    "es": "Mostrar en el Explorador de archivos",
+    "nl": "Weergeven in Verkenner"
+  },
+  "Afficher les copies en double (%lld masquées)": {
+    "de": "Doppelte Kopien anzeigen (%lld ausgeblendet)",
+    "en": "Show duplicate copies (%lld hidden)",
+    "es": "Mostrar copias duplicadas (%lld ocultas)",
+    "nl": "Dubbele kopieën tonen (%lld verborgen)"
+  },
+  "Afficher les données de l'app": {
+    "de": "Daten der App anzeigen",
+    "en": "Show the app's data",
+    "es": "Mostrar los datos de la app",
+    "nl": "Gegevens van de app tonen"
+  },
+  "Ajoutez un dossier de livres dans les réglages, ou faites glisser des livres dans la fenêtre.": {
+    "de": "Fügen Sie in den Einstellungen einen Bücherordner hinzu oder ziehen Sie Bücher in das Fenster.",
+    "en": "Add a book folder in Settings, or drag books into the window.",
+    "es": "Añade una carpeta de libros en los ajustes o arrastra libros a la ventana.",
+    "nl": "Voeg een boekenmap toe in de instellingen, of sleep boeken naar het venster."
+  },
+  "Ajouté le %@": {
+    "de": "Hinzugefügt am %@",
+    "en": "Added on %@",
+    "es": "Añadido el %@",
+    "nl": "Toegevoegd op %@"
+  },
+  "Barre latérale": {
+    "de": "Seitenleiste",
+    "en": "Sidebar",
+    "es": "Barra lateral",
+    "nl": "Navigatiekolom"
+  },
+  "Branchez une Kindle ou une Kobo par USB : elle apparaîtra ici.": {
+    "de": "Schließen Sie einen Kindle oder einen Kobo per USB an: Er erscheint hier.",
+    "en": "Connect a Kindle or a Kobo by USB: it will appear here.",
+    "es": "Conecta un Kindle o un Kobo por USB: aparecerá aquí.",
+    "nl": "Sluit een Kindle of een Kobo aan via USB: hij verschijnt hier."
+  },
+  "Conversion…": {
+    "de": "Umwandlung…",
+    "en": "Converting…",
+    "es": "Convirtiendo…",
+    "nl": "Omzetten…"
+  },
+  "Date": {
+    "de": "Datum",
+    "en": "Date",
+    "es": "Fecha",
+    "nl": "Datum"
+  },
+  "Dernier envoi : %@": {
+    "de": "Zuletzt gesendet: %@",
+    "en": "Last sent: %@",
+    "es": "Último envío: %@",
+    "nl": "Laatst verstuurd: %@"
+  },
+  "Envoi…": {
+    "de": "Senden…",
+    "en": "Sending…",
+    "es": "Enviando…",
+    "nl": "Versturen…"
+  },
+  "Envoyer les livres manquants": {
+    "de": "Fehlende Bücher senden",
+    "en": "Send the missing books",
+    "es": "Enviar los libros que faltan",
+    "nl": "Ontbrekende boeken versturen"
+  },
+  "Envoyer à « %@ »": {
+    "de": "An „%@“ senden",
+    "en": "Send to “%@”",
+    "es": "Enviar a «%@»",
+    "nl": "Naar ‘%@’ sturen"
+  },
+  "Envoyé à la liseuse": {
+    "de": "An den E-Reader gesendet",
+    "en": "Sent to the e-reader",
+    "es": "Enviado al lector",
+    "nl": "Naar de e-reader verstuurd"
+  },
+  "Fiche du livre": {
+    "de": "Angaben zum Buch",
+    "en": "Book details",
+    "es": "Ficha del libro",
+    "nl": "Gegevens van het boek"
+  },
+  "Fichiers": {
+    "de": "Dateien",
+    "en": "Files",
+    "es": "Archivos",
+    "nl": "Bestanden"
+  },
+  "Importer…": {
+    "de": "Importieren…",
+    "en": "Import…",
+    "es": "Importar…",
+    "nl": "Importeren…"
+  },
+  "Langue de Windows": {
+    "de": "Sprache von Windows",
+    "en": "Windows language",
+    "es": "Idioma de Windows",
+    "nl": "Taal van Windows"
+  },
+  "Les fichiers seront placés dans la Corbeille de Windows et ces livres quitteront Foluna. Ils resteront récupérables dans la Corbeille de Windows tant que vous ne la videz pas.": {
+    "de": "Die Dateien werden in den Papierkorb von Windows verschoben, und diese Bücher verlassen Foluna. Sie lassen sich wiederherstellen, solange Sie den Papierkorb nicht leeren.",
+    "en": "The files will be moved to the Windows Recycle Bin and these books will leave Foluna. They can be recovered from the Recycle Bin until you empty it.",
+    "es": "Los archivos se moverán a la Papelera de reciclaje de Windows y estos libros saldrán de Foluna. Se podrán recuperar mientras no vacíes la Papelera.",
+    "nl": "De bestanden worden naar de Prullenbak van Windows verplaatst en deze boeken verlaten Foluna. Ze blijven herstelbaar zolang je de Prullenbak niet leegmaakt."
+  },
+  "Livres": {
+    "de": "Bücher",
+    "en": "Books",
+    "es": "Libros",
+    "nl": "Boeken"
+  },
+  "Mettre en attente d'envoi": {
+    "de": "Zu „wartet auf Senden“ hinzufügen",
+    "en": "Add to waiting to send",
+    "es": "Poner en espera de envío",
+    "nl": "Toevoegen aan wacht op verzending"
+  },
+  "Numéro": {
+    "de": "Nummer",
+    "en": "Number",
+    "es": "Número",
+    "nl": "Nummer"
+  },
+  "Rechercher (titre, auteur)": {
+    "de": "Suchen (Titel, Autor)",
+    "en": "Search (title, author)",
+    "es": "Buscar (título, autor)",
+    "nl": "Zoeken (titel, auteur)"
+  },
+  "Remettre dans la bibliothèque": {
+    "de": "Zurück in die Bibliothek",
+    "en": "Put back in the library",
+    "es": "Devolver a la biblioteca",
+    "nl": "Terugzetten in de bibliotheek"
+  },
+  "Réglages": {
+    "de": "Einstellungen",
+    "en": "Settings",
+    "es": "Ajustes",
+    "nl": "Instellingen"
+  },
+  "Supprimer de la liseuse": {
+    "de": "Vom E-Reader löschen",
+    "en": "Delete from the e-reader",
+    "es": "Eliminar del lector",
+    "nl": "Verwijderen van de e-reader"
+  },
+  "Supprimer définitivement ?": {
+    "de": "Endgültig löschen?",
+    "en": "Delete permanently?",
+    "es": "¿Eliminar definitivamente?",
+    "nl": "Definitief verwijderen?"
+  },
+  "copie masquée": {
+    "de": "ausgeblendete Kopie",
+    "en": "hidden copy",
+    "es": "copia oculta",
+    "nl": "verborgen kopie"
+  },
+  "« %@ » peut être débranchée.": {
+    "de": "„%@“ kann getrennt werden.",
+    "en": "“%@” can be unplugged.",
+    "es": "«%@» se puede desconectar.",
+    "nl": "‘%@’ kan worden losgekoppeld."
+  }
+}

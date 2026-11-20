@@ -16,16 +16,24 @@
         "width": 1200,
         "height": 780,
         "minWidth": 800,
-        "minHeight": 520
+        "minHeight": 520,
+        "dragDropEnabled": true
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'",
+      "assetProtocol": {
+        "enable": true,
+        "scope": []
+      }
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
+    "targets": [
+      "nsis",
+      "msi"
+    ],
     "publisher": "adnmac",
     "homepage": "https://foluna.app",
     "category": "Utility",
@@ -39,8 +47,22 @@
       "icons/icon.ico"
     ],
     "windows": {
-      "nsis": { "languages": ["French", "English", "Dutch", "German", "Spanish"], "displayLanguageSelector": true },
-      "wix": { "language": ["fr-FR", "en-US"] }
+      "nsis": {
+        "languages": [
+          "French",
+          "English",
+          "Dutch",
+          "German",
+          "Spanish"
+        ],
+        "displayLanguageSelector": true
+      },
+      "wix": {
+        "language": [
+          "fr-FR",
+          "en-US"
+        ]
+      }
     }
   }
 }
