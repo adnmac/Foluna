@@ -1,0 +1,8 @@
+[package]
+name = "foluna-core"
+description = "Logique de Foluna sans interface : livres, conversions, bibliothèque, liseuses."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]

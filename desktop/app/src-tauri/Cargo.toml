@@ -1,0 +1,20 @@
+[package]
+name = "foluna"
+description = "Foluna : bibliothèque de livres chargés sur une liseuse par USB."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+# Nom distinct de l'exécutable (exigence de Cargo sous Windows).
+name = "foluna_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+foluna-core = { path = "../../core" }
+tauri = { version = "2.12", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
