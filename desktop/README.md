@@ -1,10 +1,19 @@
 # Foluna pour Windows
 
 App Windows de Foluna, réécrite en Rust avec [Tauri 2](https://tauri.app) ; l'app Mac reste en SwiftUI
-(`Sources/`). Première version prévue : bibliothèque et envoi par USB à la Kindle et à la Kobo.
+(`Sources/`). Première version : bibliothèque (dossiers de livres, couvertures, recherche, corrections, corbeille)
+et envoi par USB à la Kindle (EPUB converti en AZW3) et à la Kobo, avec file « en attente d'envoi ».
+
+Données : `%APPDATA%\Foluna` (`FOLUNA_STORE=<dossier>` pour un dossier de test, avec `FOLUNA_BOOKS=<dossier de
+livres>` ; jamais les vraies données en test).
+
+Traductions : les textes de l'interface sont en français dans `t("…")` ; `python3 desktop/scripts/l10n.py` écrit
+`app/ui/locales/<langue>.json` à partir du catalogue de l'app Mac (`Resources/Localizable.xcstrings`) et des textes
+propres à Windows (`app/ui/locales/windows.json`) ; `l10n.py check` échoue s'il manque une traduction (CI).
 
 - `core/` : crate `foluna-core`, logique sans interface (portée de `Sources/AlexandrieCore`).
-- `app/src-tauri/` : app Tauri (fenêtre, commandes appelées par l'interface).
+- `app/src-tauri/` : app Tauri (commandes appelées par l'interface, surveillance des dossiers de livres et des
+  liseuses branchées, notifications).
 - `app/ui/` : interface (Svelte + TypeScript) ; jetons de design dans `ui/tokens.css`.
 - `scripts/make-icon.py` : icône Windows tirée des calques de `Icon/AppIcon.icon`.
 

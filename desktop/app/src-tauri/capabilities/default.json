@@ -1,7 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Droits de la fenêtre principale : seulement les commandes de Foluna et les fonctions de base.",
+  "description": "Droits de la fenêtre principale : commandes de Foluna, choix de fichiers et de dossiers, notifications, affichage d'un fichier dans l'Explorateur.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-ask",
+    "dialog:allow-message",
+    "notification:default",
+    "opener:allow-reveal-item-in-dir"
+  ]
 }
