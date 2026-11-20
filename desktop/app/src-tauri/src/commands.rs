@@ -569,7 +569,7 @@ pub fn settings(state: State<'_, Shared>) -> SettingsInfo {
         covers_bytes: covers,
         conversions_bytes: conversions,
         data_folder: state.library.dirs.base.to_string_lossy().into_owned(),
-        version: foluna_core::VERSION.to_string(),
+        version: foluna_core::display_version(),
         folders: state
             .library
             .folders()
