@@ -29,6 +29,8 @@ jobs:
           workspaces: desktop
       - name: Traductions
         working-directory: .
+        env:
+          PYTHONIOENCODING: utf-8
         run: python desktop/scripts/l10n.py check
       - name: Interface (dépendances et build)
         working-directory: desktop/app
