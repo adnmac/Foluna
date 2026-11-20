@@ -11,6 +11,7 @@ pub mod library;
 pub mod metadata;
 pub mod mobi;
 pub mod pdf;
+pub mod update;
 pub mod util;
 
 pub use error::{BookError, Result};

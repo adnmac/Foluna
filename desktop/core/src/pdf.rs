@@ -1,7 +1,11 @@
-//! PDF : titre, auteur, mots-clés et protection (`Library/PDFMetadata.swift`). La couverture (rendu de la
-//! première page) viendra avec pdfium ; en attendant, un PDF n'a pas de couverture extraite.
+//! PDF : titre, auteur, mots-clés et protection (`Library/PDFMetadata.swift`), couverture rendue depuis la première
+//! page par pdfium. La bibliothèque pdfium (`pdfium.dll`, livrée avec l'app) est chargée à la demande : sans elle,
+//! un PDF n'a simplement pas de couverture.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+
+use pdfium_render::prelude::{PdfRenderConfig, Pdfium};
 
 use lopdf::{Document, Object};
 
@@ -52,8 +56,50 @@ pub fn metadata(path: &Path) -> Result<BookMetadata> {
     if doc.trailer.has(b"Encrypt") && doc.encryption_state.is_none() {
         meta = BookMetadata::new("");
         meta.is_drm_protected = true;
+        return Ok(meta);
     }
+    meta.cover_data = cover(path);
     Ok(meta)
+}
+
+static LIBRARY_PATH: OnceLock<PathBuf> = OnceLock::new();
+static PDFIUM: OnceLock<Option<Pdfium>> = OnceLock::new();
+
+/// Dossier qui contient la bibliothèque pdfium (`pdfium.dll` ou `libpdfium.so`), donné par l'app au lancement
+/// (ressources de l'installeur). Sinon : `FOLUNA_PDFIUM` (chemin du fichier), puis le dossier de l'exécutable.
+pub fn set_library_dir(dir: &Path) {
+    let _ = LIBRARY_PATH.set(dir.join(Pdfium::pdfium_platform_library_name()));
+}
+
+fn pdfium() -> Option<&'static Pdfium> {
+    PDFIUM
+        .get_or_init(|| {
+            let candidates: Vec<PathBuf> = LIBRARY_PATH
+                .get()
+                .cloned()
+                .into_iter()
+                .chain(std::env::var_os("FOLUNA_PDFIUM").map(PathBuf::from))
+                .chain(std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join(Pdfium::pdfium_platform_library_name()))))
+                .collect();
+            candidates.iter().filter(|p| p.exists()).find_map(|p| Pdfium::bind_to_library(p).ok()).map(Pdfium::new)
+        })
+        .as_ref()
+}
+
+/// Vrai si pdfium est disponible (couvertures des PDF).
+pub fn has_renderer() -> bool {
+    pdfium().is_some()
+}
+
+/// Couverture : première page rendue en 600 px de large, en JPEG.
+pub fn cover(path: &Path) -> Option<Vec<u8>> {
+    let pdfium = pdfium()?;
+    let doc = pdfium.load_pdf_from_file(path, None).ok()?;
+    let page = doc.pages().get(0).ok()?;
+    let image = page.render_with_config(&PdfRenderConfig::new().set_target_width(600)).ok()?.as_image().ok()?;
+    let mut out = std::io::Cursor::new(Vec::new());
+    image.to_rgb8().write_to(&mut out, image::ImageFormat::Jpeg).ok()?;
+    Some(out.into_inner())
 }
 
 /// Chaîne de texte PDF : UTF-16 (avec BOM) ou PDFDocEncoding (proche du Latin-1).

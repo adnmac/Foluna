@@ -197,6 +197,12 @@
     "es": "¿Eliminar definitivamente?",
     "nl": "Definitief verwijderen?"
   },
+  "Télécharger": {
+    "de": "Herunterladen",
+    "en": "Download",
+    "es": "Descargar",
+    "nl": "Downloaden"
+  },
   "copie masquée": {
     "de": "ausgeblendete Kopie",
     "en": "hidden copy",

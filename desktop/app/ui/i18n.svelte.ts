@@ -34,6 +34,18 @@ export function t(key: string, ...args: (string | number)[]): string {
 /** Marque un texte à traduire plus tard (listes de libellés), traduit ensuite par `t`. */
 export const k = (key: string) => key;
 
+/** Nom d'une langue dans la langue de l'interface (« fr » → « français ») ; vide si le code est inconnu. */
+export function languageName(code: string | null | undefined): string {
+  const c = code?.trim();
+  if (!c) return "";
+  try {
+    const name = new Intl.DisplayNames([current], { type: "language" }).of(c);
+    return name && name.toLowerCase() !== c.toLowerCase() ? name : "";
+  } catch {
+    return "";
+  }
+}
+
 /** Taille lisible (« 2,4 Mo »). */
 export function bytes(n: number | null | undefined): string {
   if (n == null) return "—";
