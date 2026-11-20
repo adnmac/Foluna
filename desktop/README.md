@@ -20,7 +20,8 @@ propres à Windows (`app/ui/locales/windows.json`) ; `l10n.py check` échoue s'i
 ## Installer Foluna sur Windows
 
 1. Télécharger `Foluna-X.Y.Z-windows-setup.exe` dans la [dernière version](https://github.com/adnmac/Foluna/releases/latest)
-   (Windows 10 ou 11, 64 bits).
+   (Windows 10 ou 11, 64 bits). Prendre le `.exe` : le `.msi` (pour les installations gérées) est vu par Windows
+   comme un autre programme. Une version déjà installée avec le `.msi` est à désinstaller d'abord.
 2. L'app n'est pas signée (pas de certificat de signature de code). Au premier lancement de l'installeur, Windows
    peut afficher « Windows a protégé votre ordinateur » : cliquer sur **Informations complémentaires**, puis
    **Exécuter quand même**.
@@ -65,7 +66,8 @@ npm run tauri build    # installeurs dans desktop/target/release/bundle/ (nsis :
 Tests du cœur : `cargo test --workspace` dans `desktop/` (`FOLUNA_PDFIUM=<chemin affiché par fetch-pdfium.py>`
 pour tester aussi les couvertures des PDF). La CI (`.github/workflows/windows.yml`) lance les tests
 et produit les installeurs à chaque changement dans `desktop/` ; ils sont téléchargeables dans l'onglet Actions
-(artefact `foluna-windows`).
+(artefact `foluna-windows` : l'installeur `.exe`, dont le numéro de passage s'affiche dans les réglages,
+« Foluna 0.1.0 (9) »).
 
 Sous Linux (développement), Tauri demande en plus les paquets de WebKitGTK :
 
