@@ -40,6 +40,9 @@ def mac_catalog():
 
 
 def main():
+    # La console de Windows écrit en cp1252 : sans cela, « ✅ » ou un texte accentué arrête le script.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8")
     mac = mac_catalog()
     windows_path = LOCALES / "windows.json"
     windows = json.loads(windows_path.read_text(encoding="utf-8")) if windows_path.exists() else {}
