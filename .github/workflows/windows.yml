@@ -1,0 +1,51 @@
+name: Windows
+
+# App Windows (desktop/) : tests du cœur Rust, puis installeurs. Lancée par tout changement dans desktop/,
+# sur n'importe quelle branche, et à la main (onglet Actions).
+on:
+  push:
+    paths: ["desktop/**", ".github/workflows/windows.yml"]
+  pull_request:
+    paths: ["desktop/**", ".github/workflows/windows.yml"]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/app/package-lock.json
+      - name: Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy
+          rustup default stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+      - name: Interface (dépendances et build)
+        working-directory: desktop/app
+        run: |
+          npm ci
+          npm run check
+          npm run build
+      - name: Tests
+        run: cargo test --workspace
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Installeurs
+        working-directory: desktop/app
+        run: npm run tauri build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: foluna-windows
+          path: |
+            desktop/target/release/bundle/nsis/*.exe
+            desktop/target/release/bundle/msi/*.msi
+          if-no-files-found: error

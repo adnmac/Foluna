@@ -1,0 +1,69 @@
+/* Jetons de design de Foluna pour Windows : mêmes valeurs que l'app Mac (Sources/Alexandrie/UI,
+   design/DESIGN-SYSTEM.md). Toute couleur, marge, rayon ou durée de l'interface passe par ces variables. */
+:root {
+  color-scheme: light dark;
+
+  /* Espacements : grille de 4 px (Space). */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-xxl: 24px;
+  --space-section: 32px;
+  --space-margin: 20px;
+
+  /* Rayons (Radius). */
+  --radius-cover: 4px;
+  --radius-field: 4px;
+  --radius-hover: 5px;
+  --radius-drop-zone: 12px;
+
+  /* Animations (Motion) : coupées si Windows demande moins d'animations. */
+  --motion-quick: 200ms;
+
+  /* Couleurs (Palette) : accent de Windows quand le moteur le donne, sinon le bleu par défaut de Windows. */
+  --color-accent: AccentColor;
+  --color-on-accent: AccentColorText;
+  --color-success: #0f7b0f;
+  --color-warning: #9d5d00;
+  --color-danger: #c42b1c;
+  --color-text: CanvasText;
+  --color-secondary: color-mix(in srgb, CanvasText 62%, Canvas);
+  --color-background: Canvas;
+  --color-sidebar: color-mix(in srgb, CanvasText 4%, Canvas);
+  --color-separator: color-mix(in srgb, CanvasText 12%, Canvas);
+
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+}
+
+@supports not (color: AccentColor) {
+  :root {
+    --color-accent: #0067c0;
+    --color-on-accent: #ffffff;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-success: #6ccb5f;
+    --color-warning: #fce100;
+    --color-danger: #ff99a4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-quick: 0ms;
+  }
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
