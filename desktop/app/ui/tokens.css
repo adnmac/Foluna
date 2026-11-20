@@ -35,6 +35,35 @@
   --color-separator: color-mix(in srgb, CanvasText 12%, Canvas);
 
   --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+
+  /* Corps de texte. */
+  --font-small: 11px;
+  --font-caption: 12px;
+  --font-body: 14px;
+  --font-title: 18px;
+
+  /* Dimensions des éléments (multiples de la grille de 4 px). */
+  --size-sidebar-width: 240px;
+  --size-search-width: 280px;
+  --size-detail-width: 420px;
+  --size-detail-min: 320px;
+  --size-detail-cover-width: 120px;
+  --size-cover-width: 36px;
+  --size-cover-height: 52px;
+  --size-narrow-field: 112px;
+  --size-menu-width: 220px;
+  --size-settings-width: 560px;
+  --size-device-name: 360px;
+  --size-control-height: 32px;
+  /* Contour de la fenêtre pendant un glisser-déposer. */
+  --size-drop-outline: 3px;
+
+  /* Surfaces. */
+  --color-hover: color-mix(in srgb, CanvasText 7%, Canvas);
+  --color-selection: color-mix(in srgb, var(--color-accent) 22%, Canvas);
+  --color-backdrop: rgb(0 0 0 / 0.32);
+  --shadow-menu: 0 8px 24px rgb(0 0 0 / 0.18);
+  --shadow-panel: 0 16px 48px rgb(0 0 0 / 0.28);
 }
 
 @supports not (color: AccentColor) {
@@ -58,6 +87,10 @@
   }
 }
 
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
   margin: 0;
@@ -66,4 +99,59 @@ body {
   color: var(--color-text);
   font-family: var(--font-ui);
   font-size: 14px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+input,
+select,
+textarea {
+  min-height: var(--size-control-height);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-separator);
+  border-radius: var(--radius-field);
+  background: var(--color-background);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+button {
+  min-height: var(--size-control-height);
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--color-separator);
+  border-radius: var(--radius-field);
+  background: var(--color-hover);
+  cursor: pointer;
+  transition: background var(--motion-quick);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+button.link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
 }
