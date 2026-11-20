@@ -2,8 +2,8 @@
   import { listen } from "@tauri-apps/api/event";
   import { getCurrentWebview } from "@tauri-apps/api/webview";
   import { ask, open, save } from "@tauri-apps/plugin-dialog";
-  import { revealItemInDir } from "@tauri-apps/plugin-opener";
-  import { api, message, type Detail, type DeviceInfo, type Row, type Sidebar as SidebarData } from "./api";
+  import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
+  import { api, message, type Detail, type DeviceInfo, type Row, type Sidebar as SidebarData, type UpdateInfo } from "./api";
   import BookDetail from "./components/BookDetail.svelte";
   import BookList from "./components/BookList.svelte";
   import ContextMenu, { type MenuItem } from "./components/ContextMenu.svelte";
@@ -25,6 +25,8 @@
   let progress = $state<Record<string, string>>({});
   let errors = $state<string[]>([]);
   let notice = $state<string | null>(null);
+  let update = $state<UpdateInfo | null>(null);
+  let version = $state("");
   let menu = $state<{ x: number; y: number; items: (MenuItem | null)[] } | null>(null);
   let settingsOpen = $state(false);
   let dropping = $state(false);
@@ -212,12 +214,14 @@
     try {
       const info = await api.settings();
       setLanguage(info.language);
+      version = info.version;
       if (info.startupError) fail(info.startupError);
       if (!info.folders.length) inform(t("Ajoutez un dossier de livres dans les réglages, ou faites glisser des livres dans la fenêtre."));
     } catch (e) {
       fail(e);
     }
     await refresh();
+    api.checkUpdate(false).then((u) => (update = u)).catch(() => {});
     await listen("library-changed", () => refresh());
     await listen("device-changed", () => refresh());
     await listen<[string, boolean]>("send-progress", (e) => {
@@ -264,6 +268,13 @@
       <button onclick={() => (settingsOpen = true)} aria-label={t("Réglages")} title={t("Réglages")}>⚙</button>
     </header>
 
+    {#if update}
+      <div class="notice" role="status">
+        <span>{t("Foluna %@ est disponible (vous avez la %@)", update.version, version)}</span>
+        <button onclick={() => update && openUrl(update.url).catch(fail)}>{t("Télécharger")}</button>
+        <button class="link" onclick={() => (update = null)}>{t("Fermer")}</button>
+      </div>
+    {/if}
     {#if notice}<div class="notice" role="status">{notice}</div>{/if}
     {#each errors as error, i}
       <div class="error" role="alert">
@@ -318,7 +329,7 @@
 
 {#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 {#if settingsOpen}
-  <Settings onclose={() => ((settingsOpen = false), refresh())} onerror={fail} onlanguage={(l) => setLanguage(l)} />
+  <Settings onclose={() => ((settingsOpen = false), refresh())} onerror={fail} onlanguage={(l) => setLanguage(l)} onupdate={(u) => (update = u)} />
 {/if}
 
 <style>
@@ -378,6 +389,7 @@
     color: var(--color-danger);
     background: var(--color-hover);
   }
+  .notice span,
   .error span {
     flex: 1;
   }

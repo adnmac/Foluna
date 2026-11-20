@@ -74,10 +74,48 @@ impl Library {
                 changed = true;
             }
         }
+        changed |= library.upgrade_books();
         if changed {
             library.save_or_report(&mut error);
         }
         (library, error)
+    }
+
+    /// Mise à niveau des livres déjà indexés, sans toucher aux corrections de l'utilisateur :
+    /// - PDF dont le titre est encore le nom du fichier, sans auteur : titre et auteur lus dans ce nom ;
+    /// - PDF sans couverture : couverture rendue par pdfium s'il est disponible ;
+    /// - codes de langue à 3 lettres (« fre ») ramenés à 2 (« fr »).
+    fn upgrade_books(&mut self) -> bool {
+        let mut changed = false;
+        let renderer = crate::pdf::has_renderer();
+        for b in self.books.iter_mut() {
+            if let Some(code) = b.language.as_deref().map(crate::extract::language_code)
+                && b.language.as_deref() != Some(code.as_str())
+            {
+                b.language = Some(code);
+                changed = true;
+            }
+            if b.format != BookFormat::Pdf || b.is_drm_protected {
+                continue;
+            }
+            let stem = Path::new(&b.path).file_stem().and_then(|s| s.to_str()).unwrap_or_default().to_string();
+            if b.authors.is_empty() && b.title == stem {
+                let (title, author) = crate::extract::title_and_author(&stem);
+                if title != b.title || author.is_some() {
+                    b.title = title;
+                    b.authors = author.into_iter().collect();
+                    changed = true;
+                }
+            }
+            if renderer
+                && !b.has_cover
+                && let Some(cover) = crate::pdf::cover(Path::new(&b.path))
+            {
+                b.has_cover = self.covers.store(&cover, &b.fingerprint);
+                changed |= b.has_cover;
+            }
+        }
+        changed
     }
 
     fn save_or_report(&self, error: &mut Option<String>) {

@@ -1,1 +1,5 @@
 target/
+target-bundle/
+# Téléchargés par scripts/fetch-pdfium.py
+app/src-tauri/pdfium/
+app/src-tauri/licenses/

@@ -1,10 +1,15 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
   import { revealItemInDir } from "@tauri-apps/plugin-opener";
-  import { api, message, type SettingsInfo } from "../api";
+  import { api, message, type SettingsInfo, type UpdateInfo } from "../api";
   import { bytes, languages, t } from "../i18n.svelte";
 
-  let { onclose, onerror, onlanguage }: { onclose: () => void; onerror: (m: string) => void; onlanguage: (l: string | null) => void } = $props();
+  let {
+    onclose,
+    onerror,
+    onlanguage,
+    onupdate,
+  }: { onclose: () => void; onerror: (m: string) => void; onlanguage: (l: string | null) => void; onupdate: (u: UpdateInfo) => void } = $props();
 
   let info = $state<SettingsInfo | null>(null);
   const names: Record<string, string> = { fr: "Français", en: "English", nl: "Nederlands", de: "Deutsch", es: "Español" };
@@ -21,6 +26,19 @@
       onerror(message(e));
     }
     await reload();
+  }
+
+  let updateStatus = $state<string | null>(null);
+  async function checkNow() {
+    updateStatus = t("Vérification…");
+    try {
+      const update = await api.checkUpdate(true);
+      updateStatus = update ? t("Version %@ disponible", update.version) : t("Foluna est à jour");
+      if (update) onupdate(update);
+    } catch (e) {
+      updateStatus = null;
+      onerror(message(e));
+    }
   }
 
   async function addFolder() {
@@ -72,6 +90,18 @@
           <input type="checkbox" checked={info.showDuplicates} onchange={(e) => run(() => api.setShowDuplicates((e.currentTarget as HTMLInputElement).checked))} />
           {t("Afficher les copies en double (%lld masquées)", info.hiddenDuplicates)}
         </label>
+      </section>
+
+      <section>
+        <h3>{t("Mises à jour")}</h3>
+        <label class="row">
+          <input type="checkbox" checked={info.checkUpdates} onchange={(e) => run(() => api.setCheckUpdates((e.currentTarget as HTMLInputElement).checked))} />
+          {t("Vérifier au démarrage s'il existe une version plus récente")}
+        </label>
+        <div class="row">
+          <button onclick={checkNow}>{t("Rechercher les mises à jour…")}</button>
+          {#if updateStatus}<span class="caption">{updateStatus}</span>{/if}
+        </div>
       </section>
 
       <section>

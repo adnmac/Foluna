@@ -244,3 +244,32 @@ fn merge_plan_keeps_unchanged_files() {
     assert!(plan.changed.is_empty());
     assert!(folders::owner(&book.path, &[f.books.to_string_lossy().into_owned()]).is_some());
 }
+
+/// Bibliothèque déjà indexée : un PDF au titre égal au nom du fichier reçoit titre et auteur, un code « fre »
+/// devient « fr » ; un titre corrigé par l'utilisateur ne change pas.
+#[test]
+fn existing_books_are_upgraded() {
+    let f = fixture();
+    std::fs::create_dir_all(&f.store).unwrap();
+    let pdf = |name: &str| {
+        let path = f.books.join(name);
+        std::fs::write(&path, b"%PDF-1.4 invalide").unwrap();
+        path.to_string_lossy().into_owned()
+    };
+    let a = pdf("L'invisible madame Orwell - Anna Funder.pdf");
+    let b = pdf("Un roman - Jean Dupont.pdf");
+    let entry = |path: &str, title: &str| format!(
+        r#"{{"addedAt":1,"asin":"AX00000001","authors":[],"fileSize":1,"fingerprint":"f-{title}","format":"pdf","hasCover":false,"isDRMProtected":false,"isImported":false,"language":"fre","metadataVersion":4,"modifiedAt":1,"path":{},"tags":[],"title":"{title}"}}"#,
+        serde_json::to_string(path).unwrap()
+    );
+    let index = format!("[{},{}]", entry(&a, "L'invisible madame Orwell - Anna Funder"), entry(&b, "Titre corrigé"));
+    std::fs::write(f.store.join("library.json"), index).unwrap();
+    let lib = open(&f);
+    let first = lib.book(&a).unwrap();
+    assert_eq!(first.title, "L'invisible madame Orwell");
+    assert_eq!(first.authors, ["Anna Funder"]);
+    assert_eq!(first.language.as_deref(), Some("fr"));
+    let second = lib.book(&b).unwrap();
+    assert_eq!(second.title, "Titre corrigé");
+    assert!(second.authors.is_empty());
+}

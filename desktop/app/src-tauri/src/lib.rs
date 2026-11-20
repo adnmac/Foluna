@@ -24,6 +24,10 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            // pdfium.dll (couvertures des PDF) est livrée dans les ressources de l'installeur.
+            if let Ok(resources) = app.path().resource_dir() {
+                foluna_core::pdf::set_library_dir(&resources);
+            }
             let state = AppState::open();
             // Couvertures affichées par l'interface : seuls ces dossiers lui sont ouverts.
             let scope = app.asset_protocol_scope();
@@ -68,6 +72,8 @@ pub fn run() {
             commands::settings,
             commands::set_language,
             commands::set_show_duplicates,
+            commands::set_check_updates,
+            commands::check_update,
             commands::clear_conversions,
             commands::export_epub,
         ])
