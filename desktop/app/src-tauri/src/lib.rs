@@ -13,8 +13,8 @@ use crate::state::{AppState, Shared};
 
 /// Version de l'app, affichée par l'interface.
 #[tauri::command]
-fn app_version() -> &'static str {
-    foluna_core::VERSION
+fn app_version() -> String {
+    foluna_core::display_version()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

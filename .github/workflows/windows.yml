@@ -51,11 +51,12 @@ jobs:
         working-directory: desktop/app
         env:
           CARGO_TARGET_DIR: ${{ github.workspace }}/desktop/target-bundle
-        run: npm run tauri build
+          # Numéro du passage affiché dans les réglages (« Foluna 0.1.0 (9) »).
+          FOLUNA_BUILD: ${{ github.run_number }}
+        run: npm run tauri build -- --bundles nsis
       - uses: actions/upload-artifact@v7
         with:
           name: foluna-windows
-          path: |
-            desktop/target-bundle/release/bundle/nsis/*.exe
-            desktop/target-bundle/release/bundle/msi/*.msi
+          # Seulement l'installeur .exe : le .msi est vu par Windows comme un autre programme (double installation).
+          path: desktop/target-bundle/release/bundle/nsis/*-setup.exe
           if-no-files-found: error
