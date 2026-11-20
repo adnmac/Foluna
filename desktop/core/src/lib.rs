@@ -5,6 +5,7 @@
 pub mod epub;
 pub mod error;
 pub mod convert;
+pub mod device;
 pub mod extract;
 pub mod library;
 pub mod metadata;

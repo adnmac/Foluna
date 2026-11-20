@@ -198,7 +198,8 @@ impl Library {
         self.books = books;
         self.save()?;
         if unreachable.is_empty() {
-            storage::purge(&self.books, &self.dirs, None);
+            let keep = crate::device::transfer::cache_names(&self.books, &self.dirs);
+            storage::purge(&self.books, &self.dirs, Some(&keep));
         }
         Ok(report)
     }
@@ -329,6 +330,146 @@ impl Library {
     pub fn empty_trash(&mut self, move_to_trash: &dyn Fn(&Path) -> Result<(), String>) -> Result<(), String> {
         let ids: Vec<String> = self.trashed_books().into_iter().map(|b| b.path).collect();
         self.delete_permanently(&ids, move_to_trash)
+    }
+
+    // File d'envoi et étagères des liseuses
+
+    /// Livres à envoyer à cette liseuse dès qu'elle sera branchée (ou à n'importe laquelle si None), dans l'ordre
+    /// des demandes ; ceux de la corbeille sont exclus.
+    pub fn pending_sends(&self, reader: Option<&str>) -> Vec<Book> {
+        let mut list: Vec<(Book, f64)> =
+            self.books.iter().filter(|b| b.trashed_at.is_none()).filter_map(|b| b.pending_date(reader).map(|d| (b.clone(), d))).collect();
+        list.sort_by(|a, b| a.1.total_cmp(&b.1));
+        list.into_iter().map(|(b, _)| b).collect()
+    }
+
+    /// Met en attente pour une liseuse (qui reçoit aussi le livre sur son étagère), ou pour la prochaine liseuse
+    /// branchée si aucune n'est choisie.
+    pub fn queue_for(&mut self, ids: &[String], reader: Option<&str>) -> Result<(), String> {
+        let now = book::now();
+        let selected: Vec<String> = self
+            .books
+            .iter()
+            .filter(|b| ids.contains(&b.path) && b.trashed_at.is_none() && b.can_send_to_any_reader())
+            .map(|b| b.path.clone())
+            .collect();
+        self.mutate(&selected, |b| match reader {
+            Some(r) => {
+                b.pending_for.get_or_insert_with(Default::default).entry(r.to_string()).or_insert(now);
+            }
+            None => {
+                b.pending_send_at.get_or_insert(now);
+            }
+        });
+        if let Some(r) = reader {
+            self.set_shelf(&selected, r, true);
+        }
+        self.save()
+    }
+
+    /// Retire de la file : pour une liseuse (et l'attente « n'importe laquelle »), ou entièrement si None.
+    pub fn remove_from_queue(&mut self, ids: &[String], reader: Option<&str>) -> Result<(), String> {
+        self.mutate(ids, |b| {
+            b.pending_send_at = None;
+            match reader {
+                Some(r) => {
+                    if let Some(map) = b.pending_for.as_mut() {
+                        map.remove(r);
+                    }
+                    if b.pending_for.as_ref().is_some_and(|m| m.is_empty()) {
+                        b.pending_for = None;
+                    }
+                }
+                None => b.pending_for = None,
+            }
+        });
+        self.save()
+    }
+
+    /// Livre arrivé sur une liseuse : date et nom d'envoi, retiré de sa file, noté envoyé et mis sur l'étagère.
+    pub fn mark_sent(&mut self, id: &str, filename: &str, reader: &str) -> Result<(), String> {
+        let now = book::now();
+        let ids = [id.to_string()];
+        self.mutate(&ids, |b| {
+            b.last_sent_at = Some(now);
+            b.sent_filename = Some(filename.to_string());
+            b.pending_send_at = None;
+            if let Some(map) = b.pending_for.as_mut() {
+                map.remove(reader);
+            }
+            if b.pending_for.as_ref().is_some_and(|m| m.is_empty()) {
+                b.pending_for = None;
+            }
+            b.sent_to.get_or_insert_with(Default::default).insert(reader.to_string(), now);
+        });
+        self.set_shelf(&ids, reader, true);
+        self.save()
+    }
+
+    /// Retire un livre de la liste « Envoyés » (tous ses fichiers) ; le nom du fichier envoyé est gardé : il sert
+    /// à reconnaître le livre s'il est encore sur la liseuse.
+    pub fn forget_sent(&mut self, id: &str) -> Result<(), String> {
+        let ids = self.identities();
+        let Some(key) = ids.get(id).cloned() else { return Ok(()) };
+        for b in self.books.iter_mut().filter(|b| ids.get(&b.path) == Some(&key)) {
+            b.last_sent_at = None;
+        }
+        self.save()
+    }
+
+    /// Livres d'une étagère (copies en double et corbeille exclues).
+    pub fn shelf_books(&self, reader: &str) -> Vec<Book> {
+        self.visible_books(false).into_iter().filter(|b| b.shelf_ids().contains(reader)).collect()
+    }
+
+    pub fn add_to_shelf(&mut self, ids: &[String], reader: &str) -> Result<(), String> {
+        self.set_shelf(ids, reader, true);
+        self.save()
+    }
+
+    /// Retire de l'étagère sans rien supprimer, ni de la bibliothèque ni de la liseuse.
+    pub fn remove_from_shelf(&mut self, ids: &[String], reader: &str) -> Result<(), String> {
+        self.set_shelf(ids, reader, false);
+        self.save()
+    }
+
+    /// Liseuse oubliée : son étagère disparaît.
+    pub fn clear_shelf(&mut self, reader: &str) -> Result<(), String> {
+        for b in self.books.iter_mut() {
+            if let Some(s) = b.shelves.as_mut() {
+                s.remove(reader);
+                if s.is_empty() {
+                    b.shelves = None;
+                }
+            }
+        }
+        self.save()
+    }
+
+    /// Étagère du livre entier (tous les fichiers du même livre).
+    fn set_shelf(&mut self, ids: &[String], reader: &str, on: bool) {
+        let identities = self.identities();
+        let keys: HashSet<String> = ids.iter().map(|id| identities.get(id).cloned().unwrap_or_else(|| id.clone())).collect();
+        for b in self.books.iter_mut() {
+            let k = identities.get(&b.path).cloned().unwrap_or_else(|| b.path.clone());
+            if !keys.contains(&k) || b.shelf_ids().contains(reader) == on {
+                continue;
+            }
+            let mut shelves = b.shelf_ids();
+            if on {
+                shelves.insert(reader.to_string());
+            } else {
+                shelves.remove(reader);
+            }
+            b.shelves = if shelves.is_empty() { None } else { Some(shelves) };
+        }
+    }
+
+    /// Seuls les états d'envoi changent : les livres reçus peuvent être des fichiers principaux de groupe complétés.
+    fn mutate(&mut self, ids: &[String], mut change: impl FnMut(&mut Book)) {
+        for b in self.books.iter_mut().filter(|b| ids.contains(&b.path)) {
+            change(b);
+        }
     }
 
     // Caches
