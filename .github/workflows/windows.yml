@@ -22,10 +22,8 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/app/package-lock.json
-      - name: Rust
-        run: |
-          rustup toolchain install stable --profile minimal --component clippy
-          rustup default stable
+      - name: Rust (version fixée par desktop/rust-toolchain.toml)
+        run: rustup toolchain install
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: desktop
