@@ -118,6 +118,25 @@ pub fn author_groups(books: &[Book]) -> Vec<NameGroup> {
     out
 }
 
+/// Nom affiché de chaque auteur (clé de `author_key` → nom de la barre latérale).
+pub fn author_names(books: &[Book]) -> HashMap<String, String> {
+    author_groups(books).into_iter().map(|g| (g.key, g.name)).collect()
+}
+
+/// Auteurs d'un livre tels que la barre latérale les nomme, chacun une seule fois : « Bauer Alain » s'affiche
+/// « Alain Bauer » si c'est le nom retenu pour le groupe. Vide si le livre n'a pas d'auteur.
+pub fn author_line(authors: &[String], names: &HashMap<String, String>) -> String {
+    let mut seen = HashSet::new();
+    let mut out: Vec<String> = Vec::new();
+    for author in authors.iter().flat_map(|a| individuals(a)) {
+        let k = author_key(&author);
+        if !k.is_empty() && seen.insert(k.clone()) {
+            out.push(names.get(&k).cloned().unwrap_or(author));
+        }
+    }
+    out.join(", ")
+}
+
 /// « Nom, Prénom » indique le nom de famille sans ambiguïté : retenu (et remis dans l'ordre). Sinon : sans
 /// parenthèses ni MAJUSCULES, puis la plus fréquente.
 fn display_name(variants: &HashMap<String, usize>) -> String {
@@ -272,6 +291,26 @@ pub fn genre_groups(books: &[Book], identities: &HashMap<String, String>) -> Vec
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn author_line_uses_group_names() {
+        use crate::library::book::Book;
+        let book = |authors: &[&str]| -> Book {
+            serde_json::from_value(serde_json::json!({
+                "path": "/l.epub", "format": "epub", "fingerprint": "f", "fileSize": 1, "modifiedAt": 0.0, "addedAt": 0.0,
+                "title": "T", "authors": authors, "tags": [], "hasCover": false, "isDRMProtected": false,
+                "isImported": false, "asin": ""
+            }))
+            .unwrap()
+        };
+        let books = vec![book(&["Alain Bauer"]), book(&["Bauer Alain"]), book(&["Alain Bauer", "Bauer Alain"]), book(&["Giono Jean"])];
+        let names = super::author_names(&books);
+        assert_eq!(super::author_line(&books[1].authors, &names), "Alain Bauer");
+        assert_eq!(super::author_line(&books[2].authors, &names), "Alain Bauer", "un seul nom pour deux graphies");
+        assert_eq!(super::author_line(&books[3].authors, &names), "Giono Jean", "un seul sens : inchangé");
+        assert_eq!(super::author_line(&[], &names), "");
+        assert_eq!(super::author_line(&["Inconnu Ailleurs".into()], &names), "Inconnu Ailleurs");
+    }
+
     use super::*;
 
     #[test]
