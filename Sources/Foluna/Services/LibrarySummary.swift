@@ -12,6 +12,8 @@ struct LibrarySummary: Sendable {
     var genres: [GenreNames.Group] = []
     var tags: [TagNames.Group] = []
     var authors: [AuthorNames.Group] = []
+    /// Nom affiché de chaque auteur (clé de regroupement → nom de la barre latérale).
+    var authorNames: [String: String] = [:]
     /// Livres par auteur (clé de regroupement).
     var authorCounts: [String: Int] = [:]
     /// Livres par étagère (identifiant de liseuse).
@@ -57,6 +59,7 @@ struct LibrarySummary: Sendable {
         genres = GenreNames.groups(visible, identities: identities)
         tags = TagNames.groups(visible, identities: identities)
         authors = AuthorNames.groups(visible)
+        authorNames = AuthorNames.names(authors)
         authorCounts = perAuthor.mapValues(\.count)
         shelves = perShelf.mapValues(\.count)
         folderCounts = perFolder.mapValues(\.count)

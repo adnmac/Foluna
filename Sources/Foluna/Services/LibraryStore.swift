@@ -318,6 +318,12 @@ final class LibraryStore {
         return list
     }
 
+    /// Auteurs d'un livre sous le nom de la barre latérale (« Bauer Alain » → « Alain Bauer » quand les deux sens
+    /// existent), chacun une seule fois. Affichage seulement : le livre et ses corrections gardent leur graphie.
+    func authorLine(_ book: Book) -> String {
+        AuthorNames.line(book.authors, names: summary.authorNames)
+    }
+
     /// Compteurs et listes de la barre latérale, calculés une fois par modification de la bibliothèque
     /// (voir `LibrarySummary`).
     /// Au-delà de 5 000 livres, il est calculé en arrière-plan (près d'une seconde à 100 000 livres, refait à

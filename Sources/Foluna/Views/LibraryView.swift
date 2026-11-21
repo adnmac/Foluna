@@ -175,7 +175,7 @@ struct LibraryView: View, Equatable {
                 // Dernière ligne donnée : les suivantes arrivent quand elle devient visible.
                 .onAppear { if r.id == lastRow { shown += Self.pageSize } }
             }
-            TableColumn("Auteur") { r in Text(r.isFile ? "" : r.book.authorLine).lineLimit(1) }
+            TableColumn("Auteur") { r in Text(r.isFile ? "" : library.authorLine(r.book)).lineLimit(1) }
             TableColumn("Série") { r in
                 if !r.isFile, let s = r.book.series {
                     Text(s + (r.book.seriesIndex.map { String(localized: " · \(SeriesNames.format($0))") } ?? "")).lineLimit(1)
@@ -273,7 +273,7 @@ struct BookCard: View {
             Text(book.title)
                 .font(.callout.weight(.medium))
                 .lineLimit(2)
-            Text(book.authorLine)
+            Text(library.authorLine(book))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -348,7 +348,7 @@ struct CoverView<Decoration: View>: View {
 
     var body: some View {
         CoverImage(url: library.coverURL(book), cacheKey: book.fingerprint, title: book.title,
-                   subtitle: book.authorLine) { decoration }
+                   subtitle: library.authorLine(book)) { decoration }
     }
 }
 
