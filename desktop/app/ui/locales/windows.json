@@ -197,6 +197,12 @@
     "es": "¿Eliminar definitivamente?",
     "nl": "Definitief verwijderen?"
   },
+  "Séparées par des virgules": {
+    "de": "Durch Kommas getrennt",
+    "en": "Separated by commas",
+    "es": "Separadas por comas",
+    "nl": "Gescheiden door komma's"
+  },
   "Télécharger": {
     "de": "Herunterladen",
     "en": "Download",
