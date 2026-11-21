@@ -53,6 +53,24 @@ public enum AuthorNames {
         .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
+    /// Nom affiché de chaque auteur (clé → nom retenu par `groups`, celui de la barre latérale).
+    public static func names(_ groups: [Group]) -> [String: String] {
+        Dictionary(groups.map { ($0.key, $0.name) }, uniquingKeysWith: { a, _ in a })
+    }
+
+    /// Auteurs d'un livre sous le nom de la barre latérale, chacun une seule fois : « Bauer Alain » s'affiche
+    /// « Alain Bauer » si c'est le nom retenu pour ce groupe. Un nom absent de `names` reste tel quel ;
+    /// « Auteur inconnu » sans auteur, comme `Book.authorLine`.
+    public static func line(_ authors: [String], names: [String: String]) -> String {
+        var seen = Set<String>(), out: [String] = []
+        for author in authors.flatMap(individuals) {
+            let k = key(author)
+            guard !k.isEmpty, seen.insert(k).inserted else { continue }
+            out.append(names[k] ?? author)
+        }
+        return out.isEmpty ? String(localized: "Auteur inconnu") : out.joined(separator: ", ")
+    }
+
     /// Une graphie « Nom, Prénom » indique le nom de famille sans ambiguïté : elle est retenue (et remise
     /// dans l'ordre « Prénom Nom »). Sinon : sans parenthèses ni MAJUSCULES, puis la plus fréquente.
     static func displayName(_ variants: [String: Int]) -> String {

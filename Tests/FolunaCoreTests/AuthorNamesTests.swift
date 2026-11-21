@@ -30,6 +30,21 @@ import Testing
         #expect(AuthorNames.readable("Michel-Aguirre, Caroline") == "Caroline Michel-Aguirre")
     }
 
+    /// Les deux sens d'un même nom s'affichent sous le nom de la barre latérale, une seule fois par livre.
+    @Test func lineUsesGroupNames() {
+        let books = [book("a", ["Alain Bauer"]), book("b", ["Bauer Alain"]), book("c", ["Alain Bauer", "Bauer Alain"]),
+                     book("d", ["Alain Bauer"]), book("e", ["Giono Jean"])]
+        let names = AuthorNames.names(AuthorNames.groups(books))
+        #expect(AuthorNames.line(books[1].authors, names: names) == "Alain Bauer")
+        #expect(AuthorNames.line(books[2].authors, names: names) == "Alain Bauer")
+        // Un nom écrit dans un seul sens reste tel quel.
+        #expect(AuthorNames.line(books[4].authors, names: names) == "Giono Jean")
+        #expect(AuthorNames.line(["Inconnu Ailleurs"], names: names) == "Inconnu Ailleurs")
+        #expect(AuthorNames.line([], names: names) == Book(path: "x", format: .epub, fingerprint: "x", fileSize: 0,
+            modifiedAt: Date(), addedAt: Date(), title: "x", authors: [], tags: [], hasCover: false,
+            isDRMProtected: false, isImported: false, asin: "A").authorLine)
+    }
+
     /// Statistiques sur un vrai index (FOLUNA_LIBRARY_INDEX=…/library.json), lecture seule.
     @Test(.enabled(if: ProcessInfo.processInfo.environment["FOLUNA_LIBRARY_INDEX"] != nil))
     func realLibrary() throws {
