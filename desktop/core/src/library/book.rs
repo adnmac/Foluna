@@ -126,10 +126,6 @@ impl Book {
         !self.is_drm_protected || self.format.is_kindle_native()
     }
 
-    pub fn author_line(&self) -> String {
-        if self.authors.is_empty() { "Auteur inconnu".into() } else { self.authors.join(", ") }
-    }
-
     /// Informations corrigeables, appliquées aux copies envoyées.
     pub fn edits(&self) -> MetadataEdits {
         MetadataEdits {

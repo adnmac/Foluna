@@ -39,13 +39,14 @@ fn cover_path(state: &AppState, b: &Book) -> Option<String> {
     b.has_cover.then(|| state.library.covers.path(&b.fingerprint)).filter(|p| p.exists()).map(|p| p.to_string_lossy().into_owned())
 }
 
-fn row(state: &AppState, group: &groups::BookGroup) -> Row {
+/// `authors` : nom affiché de chaque auteur (`names::author_names`), le même que dans la barre latérale.
+fn row(state: &AppState, group: &groups::BookGroup, authors: &HashMap<String, String>) -> Row {
     let p = group.primary();
     Row {
         id: group.id.clone(),
         ids: group.books.iter().map(|b| b.path.clone()).collect(),
         title: p.title.clone(),
-        author_line: p.author_line(),
+        author_line: names::author_line(&p.authors, authors),
         formats: group.formats().iter().map(|f| f.label()).collect(),
         cover: group.books.iter().find_map(|b| cover_path(state, b)),
         series: p.series.clone(),
@@ -92,7 +93,8 @@ pub fn list(state: State<'_, Shared>, page: String, query: String, sort: String)
     let state = state.lock();
     let books = page_books(&state, &page);
     let ids = state.library.identities();
-    let mut rows: Vec<Row> = groups::make(&books, Some(&ids)).iter().map(|g| row(&state, g)).collect();
+    let authors = names::author_names(&state.library.visible_books(state.settings.show_duplicates));
+    let mut rows: Vec<Row> = groups::make(&books, Some(&ids)).iter().map(|g| row(&state, g, &authors)).collect();
     let q = names::key(&query);
     if !q.is_empty() {
         rows.retain(|r| names::key(&r.title).contains(&q) || names::key(&r.author_line).contains(&q));
@@ -102,7 +104,10 @@ pub fn list(state: State<'_, Shared>, page: String, query: String, sort: String)
         (p, _) if p.starts_with("series:") => {
             rows.sort_by(|a, b| a.series_index.unwrap_or(f64::MAX).total_cmp(&b.series_index.unwrap_or(f64::MAX)))
         }
-        (_, "author") => rows.sort_by(|a, b| names::natural_cmp(&a.author_line, &b.author_line)),
+        // Livres sans auteur à la fin.
+        (_, "author") => rows.sort_by(|a, b| {
+            a.author_line.is_empty().cmp(&b.author_line.is_empty()).then_with(|| names::natural_cmp(&a.author_line, &b.author_line))
+        }),
         _ => rows.sort_by(|a, b| names::natural_cmp(&a.title, &b.title)),
     }
     rows
@@ -425,7 +430,8 @@ pub async fn device(state: State<'_, Shared>) -> Res<Option<DeviceInfo>> {
         let ids = state.library.identities();
         let shelf_groups = groups::make(&state.library.shelf_books(&reader), Some(&ids));
         let missing_paths: HashSet<String> = shelf::missing(&shelf_groups, &names, &titles).into_iter().map(|b| b.path).collect();
-        let missing = shelf_groups.iter().filter(|g| missing_paths.contains(&g.primary().path)).map(|g| row(&state, g)).collect();
+        let authors = names::author_names(&state.library.visible_books(state.settings.show_duplicates));
+        let missing = shelf_groups.iter().filter(|g| missing_paths.contains(&g.primary().path)).map(|g| row(&state, g, &authors)).collect();
         Ok(Some(DeviceInfo {
             id: reader,
             name: state.device_name().unwrap_or_default(),
