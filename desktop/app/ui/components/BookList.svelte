@@ -42,7 +42,7 @@
       <div class="text">
         <div class="title">{row.title}</div>
         <div class="author">
-          {row.authorLine}
+          {row.authorLine || t("Auteur inconnu")}
           {#if row.series}<span class="series"> · {row.series}{row.seriesIndex != null ? " " + row.seriesIndex : ""}</span>{/if}
         </div>
       </div>
