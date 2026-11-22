@@ -11,6 +11,8 @@ final class ReaderMenuState: ObservableObject {
     struct Values: Equatable {
         /// La fenêtre au premier plan lit un EPUB (ou un MOBI, un AZW3) : notes et comparaison possibles.
         var canRead = false
+        /// Un livre est ouvert : la recherche dans son texte est possible.
+        var canSearch = false
         var showsNotes = false
         var isComparing = false
         var isLocked = true
@@ -19,6 +21,7 @@ final class ReaderMenuState: ObservableObject {
     /// Commandes de la fenêtre au premier plan, appelées au choix d'un élément.
     struct Actions {
         var toggleNotes: () -> Void = {}
+        var find: () -> Void = {}
         var chooseCompanion: () -> Void = {}
         var toggleLock: () -> Void = {}
         var swapSides: () -> Void = {}
@@ -54,6 +57,10 @@ struct ReaderCommands: Commands {
 
     var body: some Commands {
         CommandMenu("Lecture") {
+            Button("Rechercher dans le livre…") { actions.find() }
+                .keyboardShortcut("f")
+                .disabled(!state.canSearch)
+            Divider()
             Toggle("Notes de bas de page", isOn: Binding(get: { state.showsNotes }, set: { _ in actions.toggleNotes() }))
                 .keyboardShortcut("n", modifiers: [.command, .option])
                 .disabled(!state.canRead || state.isComparing)

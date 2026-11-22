@@ -84,6 +84,11 @@ struct ReaderView: View {
     @State private var hits: [ContentSearch.Snippet] = []
     @State private var hitIndex = 0
     @State private var hitQuery = ""
+    /// Barre de recherche dans le livre (⌘F) : ouverte, texte tapé, champ au clavier.
+    @State private var findsInBook = false
+    @State private var findText = ""
+    @State private var searching = false
+    @FocusState private var findFocused: Bool
     /// Colonne de gauche : table des matières ou renvois de la recherche.
     @State private var sidebarMode: SidebarMode = .contents
     /// Panneau des notes de bas de page ouvert (S-103), pour tous les livres ; ses notes suivent la page.
@@ -113,7 +118,7 @@ struct ReaderView: View {
                 .navigationSplitViewColumnWidth(min: 200, ideal: 260, max: 380)
         } detail: {
             readingArea
-                .safeAreaInset(edge: .top, spacing: 0) { if !hits.isEmpty { hitsBar } }
+                .safeAreaInset(edge: .top, spacing: 0) { if findsInBook || !hits.isEmpty { hitsBar } }
         }
         .navigationTitle(book.title)
         .navigationSubtitle(book.authorLine)
@@ -136,6 +141,7 @@ struct ReaderView: View {
         .onChange(of: activeState) { publishMenu() }
         .onChange(of: menuValues) { publishMenu() }
         .onChange(of: ReaderLaunch.shared.targets[book.id]) { jumpToTarget() }
+        .task(id: findText) { await searchInBook() }
         .onDisappear {
             reading.saveNow()
             ReaderMenuState.shared.clear(owner: menuOwner)
@@ -324,7 +330,7 @@ struct ReaderView: View {
     // MARK: Menu Lecture
 
     private var menuValues: ReaderMenuState.Values {
-        ReaderMenuState.Values(canRead: epub != nil, showsNotes: showsNotes, isComparing: compare != nil,
+        ReaderMenuState.Values(canRead: epub != nil, canSearch: content != nil, showsNotes: showsNotes, isComparing: compare != nil,
                                isLocked: compare?.isLocked ?? true)
     }
 
@@ -336,6 +342,7 @@ struct ReaderView: View {
         }
         ReaderMenuState.shared.update(owner: menuOwner, values: menuValues, actions: ReaderMenuState.Actions(
             toggleNotes: { showsNotes.toggle() },
+            find: { openFind() },
             chooseCompanion: { choosesCompanion = true },
             toggleLock: { setLocked(!(compare?.isLocked ?? true)) },
             swapSides: { compare?.isSwapped.toggle() },
@@ -459,16 +466,31 @@ struct ReaderView: View {
     }
 
     /// Barre au-dessus de la page : le mot cherché, le renvoi affiché, précédent et suivant (⇧⌘G, ⌘G).
+    /// Le champ cherche pendant la frappe ; Retour passe au renvoi suivant, Échap ferme la barre.
     private var hitsBar: some View {
         HStack(spacing: Space.sm) {
             Image(systemName: "text.magnifyingglass").foregroundStyle(.secondary).accessibilityHidden(true)
-            Text("« \(hitQuery) »").font(.callout.weight(.semibold)).lineLimit(1)
-            Text("\(hitIndex + 1) sur \(hits.count)").font(.callout.monospacedDigit()).foregroundStyle(.secondary)
+            TextField("Rechercher dans le livre", text: $findText)
+                .textFieldStyle(.roundedBorder)
+                .focused($findFocused)
+                .frame(maxWidth: Layout.toolbarMenu)
+                .onSubmit { goToHit(hits.isEmpty ? 0 : (hitIndex + 1) % hits.count) }
+            Group {
+                if searching {
+                    ProgressView().controlSize(.small)
+                } else if !hits.isEmpty {
+                    Text("\(hitIndex + 1) sur \(hits.count)")
+                } else if findText.trimmingCharacters(in: .whitespaces).count >= 2 {
+                    Text("Aucun résultat")
+                }
+            }
+            .font(.callout.monospacedDigit())
+            .foregroundStyle(.secondary)
             Spacer()
             ControlGroup {
                 Button { goToHit(hitIndex - 1) } label: { Label("Renvoi précédent", systemImage: "chevron.up") }
                     .keyboardShortcut("g", modifiers: [.command, .shift])
-                    .disabled(hitIndex == 0)
+                    .disabled(hitIndex == 0 || hits.isEmpty)
                     .help("Renvoi précédent (⇧⌘G)")
                 Button { goToHit(hitIndex + 1) } label: { Label("Renvoi suivant", systemImage: "chevron.down") }
                     .keyboardShortcut("g", modifiers: .command)
@@ -476,10 +498,7 @@ struct ReaderView: View {
                     .help("Renvoi suivant (⌘G)")
             }
             .fixedSize()
-            Button {
-                hits = []
-                sidebarMode = .contents
-            } label: { Label("Fermer la recherche", systemImage: "xmark.circle.fill") }
+            Button { closeFind() } label: { Label("Fermer la recherche", systemImage: "xmark.circle.fill") }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
                 .keyboardShortcut(.cancelAction)
@@ -489,6 +508,55 @@ struct ReaderView: View {
         .padding(.horizontal, Space.lg)
         .padding(.vertical, Space.sm)
         .background(.bar)
+    }
+
+    /// ⌘F : la barre de recherche s'ouvre, ou reprend le clavier si elle l'est déjà.
+    private func openFind() {
+        findsInBook = true
+        findFocused = true
+    }
+
+    private func closeFind() {
+        findsInBook = false
+        findText = ""
+        hits = []
+        sidebarMode = .contents
+        switch content {
+        case .epub(let c): focusPage(c.webView)
+        case .pdf(let c): focusPage(c.view)
+        case nil: break
+        }
+    }
+
+    /// Cherche le texte tapé dans tout le livre, après une courte pause dans la frappe ; montre le premier
+    /// renvoi à partir du chapitre (ou de la page) affiché.
+    private func searchInBook() async {
+        let query = findText.trimmingCharacters(in: .whitespaces)
+        // Le texte vient d'une recherche de la bibliothèque : ses renvois sont déjà là.
+        guard findsInBook, query != hitQuery else { return }
+        guard query.count >= 2 else {
+            hits = []
+            hitQuery = ""
+            sidebarMode = .contents
+            return
+        }
+        try? await Task.sleep(for: .milliseconds(300))
+        guard !Task.isCancelled else { return }
+        searching = true
+        defer { searching = false }
+        let found = await AppServices.shared.contentIndexer.passages(of: book, query: query, exact: false)
+        guard !Task.isCancelled else { return }
+        hits = found
+        hitQuery = query
+        guard !found.isEmpty else { sidebarMode = .contents; return }
+        let current: Int = switch content {
+        case .epub(let c): c.chapter
+        case .pdf(let c): c.page
+        case nil: 0
+        }
+        sidebarMode = .hits
+        goToHit(found.firstIndex { $0.section >= current } ?? 0)
+        findFocused = true
     }
 
     /// Montre un renvoi : sa page, le mot sélectionné.
@@ -512,6 +580,8 @@ struct ReaderView: View {
             guard !found.isEmpty else { return }
             hits = found
             hitQuery = target.query
+            findText = target.query
+            findsInBook = true
             hitIndex = found.firstIndex { $0.section == target.section && $0.match == target.text && $0.occurrence == target.occurrence } ?? 0
             sidebarMode = .hits
             showsContents = true
